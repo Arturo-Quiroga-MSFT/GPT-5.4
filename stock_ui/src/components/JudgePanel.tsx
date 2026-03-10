@@ -5,11 +5,12 @@ import type { LevelState } from "../hooks/useCompareSession";
 interface Props {
   query: string;
   columns: Record<string, LevelState>;
+  onJudgeText?: (text: string) => void;
 }
 
 type JudgeStatus = "idle" | "running" | "done" | "error";
 
-export function JudgePanel({ query, columns }: Props) {
+export function JudgePanel({ query, columns, onJudgeText }: Props) {
   const [status, setStatus] = useState<JudgeStatus>("idle");
   const [text, setText] = useState("");
   const [elapsed, setElapsed] = useState<number | null>(null);
@@ -32,6 +33,7 @@ export function JudgePanel({ query, columns }: Props) {
       const reader = res.body!.getReader();
       const decoder = new TextDecoder();
       let buffer = "";
+      let accText = "";
 
       while (true) {
         const { done, value } = await reader.read();
@@ -48,13 +50,17 @@ export function JudgePanel({ query, columns }: Props) {
 
           const { type, data } = parsed;
           switch (type) {
-            case "judge_delta":
-              setText((prev) => prev + ((data.delta as string) ?? ""));
+            case "judge_delta": {
+              const delta = (data.delta as string) ?? "";
+              accText += delta;
+              setText(accText);
               break;
+            }
             case "judge_done":
               setElapsed(data.elapsed as number);
               setTokens({ input: data.input_tokens as number, output: data.output_tokens as number });
               setStatus("done");
+              onJudgeText?.(accText);
               break;
             case "error":
               setText((data.message as string) ?? "Unknown error");

@@ -12,14 +12,68 @@ const EXAMPLE_QUERIES = [
 export function ComparePage() {
   const { columns, isRunning, lastQuery, run, reset } = useCompareSession();
   const [input, setInput] = useState("");
+  const [judgeText, setJudgeText] = useState("");
 
   const hasResults = LEVELS.some((l) => columns[l].status !== "idle");
+  const allDone = LEVELS.every((l) => columns[l].status === "done");
 
   const handleSubmit = (text: string) => {
     const q = text.trim();
     if (!q || isRunning) return;
     setInput("");
+    setJudgeText("");
     run(q);
+  };
+
+  const handleReset = () => {
+    setJudgeText("");
+    reset();
+  };
+
+  const saveToDisk = () => {
+    const now = new Date();
+    const ts = now.toISOString().replace("T", " ").slice(0, 19);
+    const fileTs = now.toISOString().replace(/[^0-9]/g, "").slice(0, 15);
+    const emoji: Record<string, string> = { low: "🟢", medium: "🟡", high: "🔴" };
+    const label: Record<string, string> = { low: "Low", medium: "Medium", high: "High" };
+
+    const sections = LEVELS.map((level) => {
+      const col = columns[level];
+      const stats = [
+        col.elapsed != null ? `Elapsed: ${col.elapsed}s` : null,
+        col.inputTokens != null ? `Input: ${col.inputTokens.toLocaleString()} tokens` : null,
+        col.outputTokens != null ? `Output: ${col.outputTokens.toLocaleString()} tokens` : null,
+      ].filter(Boolean).join(" | ");
+      return [
+        `## ${emoji[level]} ${label[level]} Reasoning`,
+        stats ? `*${stats}*` : "",
+        "",
+        col.text || "*(no response)*",
+      ].join("\n");
+    }).join("\n\n---\n\n");
+
+    const judgeSection = judgeText
+      ? `\n\n---\n\n## 🏆 AI Judge Analysis\n\n${judgeText}`
+      : "";
+
+    const md = [
+      "# GPT-5.4 Reasoning Level Comparison",
+      `**Date:** ${ts}`,
+      `**Query:** ${lastQuery}`,
+      "",
+      "---",
+      "",
+      sections,
+      judgeSection,
+    ].join("\n");
+
+    const blob = new Blob([md], { type: "text/markdown" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `comparison_${fileTs}.md`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -53,8 +107,13 @@ export function ComparePage() {
           {isRunning ? "Running…" : "Compare ▶"}
         </button>
         {hasResults && !isRunning && (
-          <button className="compare-reset-btn" onClick={reset}>
+          <button className="compare-reset-btn" onClick={handleReset}>
             Reset
+          </button>
+        )}
+        {allDone && (
+          <button className="compare-save-btn" onClick={saveToDisk}>
+            💾 Save Results
           </button>
         )}
       </div>
@@ -85,7 +144,7 @@ export function ComparePage() {
       )}
 
       {/* ── Judge panel (appears when all 3 done) ─────────────── */}
-      <JudgePanel query={lastQuery} columns={columns} />
+      <JudgePanel query={lastQuery} columns={columns} onJudgeText={setJudgeText} />
     </div>
   );
 }
