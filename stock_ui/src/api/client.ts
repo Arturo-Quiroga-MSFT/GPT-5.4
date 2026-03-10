@@ -1,11 +1,5 @@
 /**
  * API client — thin wrapper over the FastAPI backend.
- *
- * The streaming endpoint returns a text/event-stream where each line is:
- *   data: {"type": "<event>", "data": {...}}
- *
- * The hook (useAnalysisStream) consumes the raw fetch stream; this module
- * just holds the base URL so it is configured in one place.
  */
 
 export const API_BASE = import.meta.env.VITE_API_BASE ?? "http://localhost:8000";
@@ -15,9 +9,28 @@ export interface AnalyseRequest {
   days: number;
 }
 
-/** Open the SSE stream and return the raw Response (caller reads body). */
+export interface ChatRequest {
+  message: string;
+  previous_response_id?: string;
+}
+
+/** Open the SSE stream for the structured analyse endpoint (kept for compat). */
 export async function openAnalysisStream(req: AnalyseRequest): Promise<Response> {
   const res = await fetch(`${API_BASE}/api/analyse`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(req),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`API error ${res.status}: ${text}`);
+  }
+  return res;
+}
+
+/** Open the SSE stream for the free-form chat endpoint. */
+export async function openChatStream(req: ChatRequest): Promise<Response> {
+  const res = await fetch(`${API_BASE}/api/chat`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(req),

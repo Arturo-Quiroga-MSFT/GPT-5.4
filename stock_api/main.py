@@ -20,8 +20,8 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 
-from models import AnalyseRequest
-from llm_service import run_analysis_stream
+from models import AnalyseRequest, ChatRequest
+from llm_service import run_analysis_stream, run_chat_stream
 
 # Origins allowed to call the API — extend as needed for production
 ALLOWED_ORIGINS = [
@@ -78,6 +78,33 @@ def analyse(req: AnalyseRequest):
         headers={
             "Cache-Control": "no-cache",
             "X-Accel-Buffering": "no",   # disables nginx buffering when behind a proxy
+            "Connection": "keep-alive",
+        },
+    )
+
+
+@app.post("/api/chat")
+def chat(req: ChatRequest):
+    """
+    Stream a single chat turn.  Accepts any free-form message and an optional
+    previous_response_id to continue a conversation without resending history.
+
+    Event types (in order):
+        status            — model call initiated
+        tool_call         — model issued get_stock_history (optional)
+        tool_result       — yfinance data (includes daily_closes for charting, optional)
+        analysis_start    — text generation beginning
+        analysis_delta    — one token of response text (delta: str)
+        analysis_done     — text complete
+        done              — turn complete (response_id: str, usage: {...})
+        error             — something went wrong (message: str)
+    """
+    return StreamingResponse(
+        run_chat_stream(req.message, req.previous_response_id),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
             "Connection": "keep-alive",
         },
     )

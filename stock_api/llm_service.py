@@ -173,3 +173,111 @@ def run_analysis_stream(ticker: str, days: int) -> Generator[str, None, None]:
             }
         },
     )
+
+
+# ── Chat stream (multi-turn, user-driven) ─────────────────────────────
+CHAT_SYSTEM_PROMPT = (
+    "You are a concise financial analysis assistant with access to real-time stock price data. "
+    "When asked about a stock, use the get_stock_history tool to fetch actual price data before analysing. "
+    "Keep responses focused and actionable. After each analysis, suggest one follow-up the user might explore."
+)
+
+
+def run_chat_stream(message: str, previous_response_id: str | None) -> Generator[str, None, None]:
+    """
+    Single-turn handler for the chat endpoint.  Accepts any free-form message
+    and an optional previous_response_id for conversation continuity.
+
+    No automatic follow-up phase — the user drives all follow-up turns.
+
+    Events yielded (in order):
+        status → [tool_call → tool_result]? → analysis_start →
+        analysis_delta* → analysis_done → done | error
+
+    The `done` event includes `response_id` so the frontend can chain the
+    next message without resending history.
+    """
+    total_input = 0
+    total_output = 0
+
+    yield _sse("status", {"message": f"Calling {DEPLOYMENT}…"})
+
+    # ── Step 1: Non-streaming call (detect / execute tool calls) ──────
+    kwargs: dict = {
+        "model": DEPLOYMENT,
+        "input": message,
+        "tools": TOOLS,
+        "instructions": CHAT_SYSTEM_PROMPT,
+    }
+    if previous_response_id:
+        kwargs["previous_response_id"] = previous_response_id
+
+    try:
+        resp = client.responses.create(**kwargs)
+    except Exception as e:
+        yield _sse("error", {"message": f"Model call failed: {e}"})
+        return
+
+    total_input += resp.usage.input_tokens
+    total_output += resp.usage.output_tokens
+
+    tool_outputs = []
+    for item in resp.output:
+        if item.type == "function_call":
+            args = json.loads(item.arguments)
+            yield _sse("tool_call", {"name": item.name, "args": args})
+
+            result_str = TOOL_DISPATCH[item.name](args)
+            result_data = json.loads(result_str)
+
+            if result_data.get("error"):
+                yield _sse("error", {"message": result_data["error"]})
+                return
+
+            yield _sse("tool_result", result_data)
+            tool_outputs.append(
+                {
+                    "type": "function_call_output",
+                    "call_id": item.call_id,
+                    "output": result_str,
+                }
+            )
+
+    # ── Step 2a: Tool calls happened — stream the synthesis ───────────
+    yield _sse("analysis_start", {})
+    response_id: str | None = None
+
+    if tool_outputs:
+        try:
+            stream = client.responses.create(
+                model=DEPLOYMENT,
+                input=resp.output + tool_outputs,
+                tools=TOOLS,
+                stream=True,
+            )
+            for event in stream:
+                if event.type == "response.output_text.delta":
+                    yield _sse("analysis_delta", {"delta": event.delta})
+                elif event.type == "response.completed":
+                    response_id = event.response.id
+                    total_input += event.response.usage.input_tokens
+                    total_output += event.response.usage.output_tokens
+        except Exception as e:
+            yield _sse("error", {"message": f"Streaming failed: {e}"})
+            return
+    else:
+        # ── Step 2b: No tool calls — emit text from step 1 directly ───
+        yield _sse("analysis_delta", {"delta": resp.output_text})
+        response_id = resp.id
+
+    yield _sse("analysis_done", {})
+    yield _sse(
+        "done",
+        {
+            "response_id": response_id,
+            "usage": {
+                "total_input_tokens": total_input,
+                "total_output_tokens": total_output,
+            },
+        },
+    )

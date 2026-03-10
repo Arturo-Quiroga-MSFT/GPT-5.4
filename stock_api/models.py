@@ -17,3 +17,16 @@ class AnalyseRequest(BaseModel):
         if not re.match(r"^[A-Z0-9.\-]+$", v):
             raise ValueError("Ticker must contain only letters, digits, '.', or '-'")
         return v
+
+
+class ChatRequest(BaseModel):
+    message: str = Field(..., min_length=1, max_length=2000, description="Free-form user message")
+    previous_response_id: str | None = Field(default=None, description="Response ID from the previous turn for conversation chaining")
+
+    @field_validator("message")
+    @classmethod
+    def clean_message(cls, v: str) -> str:
+        v = v.strip()
+        if not v:
+            raise ValueError("Message cannot be empty")
+        return v
