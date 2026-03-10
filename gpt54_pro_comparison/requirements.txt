@@ -2,7 +2,5 @@ openai>=1.82.0
 python-dotenv>=1.1.0
 azure-identity>=1.21.0
 rich>=14.0.0
-Pillow>=11.2.0
 yfinance>=0.2.40
 requests>=2.32.0
-matplotlib>=3.9.0
