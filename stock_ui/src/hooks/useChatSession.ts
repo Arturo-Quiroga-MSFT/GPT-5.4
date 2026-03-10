@@ -12,11 +12,13 @@ import { useCallback, useRef, useState } from "react";
 import { openChatStream } from "../api/client";
 // Re-use the canonical type definitions so all components stay in sync.
 import type { ToolResult, UsageInfo, StreamPhase } from "./useAnalysisStream";
+import type { FundamentalsResult } from "../components/FundamentalsCard";
 
 export interface CompletedTurn {
   id: string;
   userMessage: string;
   toolResult?: ToolResult;
+  fundamentalsResult?: FundamentalsResult;
   analysisText: string;
   usage?: UsageInfo;
   error?: string;
@@ -27,6 +29,7 @@ export interface StreamingState {
   phase: StreamPhase;
   statusMessage: string;
   toolResult?: ToolResult;
+  fundamentalsResult?: FundamentalsResult;
   analysisText: string;
   error?: string;
 }
@@ -67,6 +70,7 @@ export function useChatSession() {
 
       // Local accumulators for this turn
       let accToolResult: ToolResult | undefined;
+      let accFundamentalsResult: FundamentalsResult | undefined;
       let accAnalysisText = "";
 
       while (true) {
@@ -114,6 +118,13 @@ export function useChatSession() {
               );
               break;
 
+            case "fundamentals_result":
+              accFundamentalsResult = data as unknown as FundamentalsResult;
+              setStreaming((s) =>
+                s ? { ...s, fundamentalsResult: data as unknown as FundamentalsResult } : null
+              );
+              break;
+
             case "analysis_start":
               setStreaming((s) => (s ? { ...s, phase: "analysing", analysisText: "" } : null));
               break;
@@ -140,6 +151,7 @@ export function useChatSession() {
                   id: responseId ?? String(Date.now()),
                   userMessage: text,
                   toolResult: accToolResult,
+                  fundamentalsResult: accFundamentalsResult,
                   analysisText: accAnalysisText,
                   usage,
                 },
@@ -155,6 +167,7 @@ export function useChatSession() {
                   id: String(Date.now()),
                   userMessage: text,
                   toolResult: accToolResult,
+                  fundamentalsResult: accFundamentalsResult,
                   analysisText: accAnalysisText,
                   error: (data.message as string) ?? "Unknown error",
                 },

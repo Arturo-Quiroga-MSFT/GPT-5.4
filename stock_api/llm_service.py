@@ -177,10 +177,21 @@ def run_analysis_stream(ticker: str, days: int) -> Generator[str, None, None]:
 
 # ── Chat stream (multi-turn, user-driven) ─────────────────────────────
 CHAT_SYSTEM_PROMPT = (
-    "You are a concise financial analysis assistant with access to real-time stock price data. "
-    "When asked about a stock, use the get_stock_history tool to fetch actual price data before analysing. "
-    "Keep responses focused and actionable. After each analysis, suggest one follow-up the user might explore."
+    "You are a concise financial analysis assistant with access to real-time stock data. "
+    "You have three capabilities:\n"
+    "1. get_stock_history — fetch daily price/volume data for technical analysis\n"
+    "2. get_fundamentals — fetch valuation, profitability, growth, health, and analyst data\n"
+    "3. web_search — search for latest news, earnings, analyst upgrades/downgrades, SEC filings\n"
+    "\n"
+    "For technical questions (price trends, chart patterns) use get_stock_history. "
+    "For value/quality questions (is it cheap? healthy balance sheet?) use get_fundamentals. "
+    "For recent events (latest earnings, news, analyst changes) use web_search. "
+    "For comprehensive analysis, call multiple tools. "
+    "Keep responses focused and actionable. After each analysis, suggest one useful follow-up."
 )
+
+# Tools passed to the model: our two local function tools + built-in web search
+CHAT_TOOLS = TOOLS + [{"type": "web_search_preview"}]
 
 
 def run_chat_stream(message: str, previous_response_id: str | None) -> Generator[str, None, None]:
@@ -206,7 +217,7 @@ def run_chat_stream(message: str, previous_response_id: str | None) -> Generator
     kwargs: dict = {
         "model": DEPLOYMENT,
         "input": message,
-        "tools": TOOLS,
+        "tools": CHAT_TOOLS,
         "instructions": CHAT_SYSTEM_PROMPT,
     }
     if previous_response_id:
@@ -234,7 +245,9 @@ def run_chat_stream(message: str, previous_response_id: str | None) -> Generator
                 yield _sse("error", {"message": result_data["error"]})
                 return
 
-            yield _sse("tool_result", result_data)
+            # Emit the right event type so the frontend can render the correct card
+            event_type = "fundamentals_result" if item.name == "get_fundamentals" else "tool_result"
+            yield _sse(event_type, result_data)
             tool_outputs.append(
                 {
                     "type": "function_call_output",
@@ -252,7 +265,7 @@ def run_chat_stream(message: str, previous_response_id: str | None) -> Generator
             stream = client.responses.create(
                 model=DEPLOYMENT,
                 input=resp.output + tool_outputs,
-                tools=TOOLS,
+                tools=CHAT_TOOLS,
                 stream=True,
             )
             for event in stream:

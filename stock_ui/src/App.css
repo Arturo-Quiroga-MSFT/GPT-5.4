@@ -375,3 +375,94 @@
 
 .usage-footer strong { color: #7b99d4; }
 
+/* ── Fundamentals card ──────────────────────────────────────────── */
+.fundamentals-card {
+  background: #161828;
+  border: 1px solid #1e2a40;
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.fund-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #1e2a40;
+}
+
+.fund-ticker {
+  font-size: 1.15rem;
+  font-weight: 800;
+  background: linear-gradient(90deg, #00d4ff, #7b61ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.fund-name {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #d4e8ff;
+}
+
+.fund-sector {
+  font-size: 0.78rem;
+  color: #5a7ab0;
+  font-style: italic;
+}
+
+.fund-mktcap {
+  font-size: 0.78rem;
+  color: #5a7ab0;
+  margin-left: auto;
+}
+
+.fund-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.fund-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.fund-section-title {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #7b61ff;
+  padding-bottom: 0.3rem;
+  border-bottom: 1px solid #1e2a40;
+  margin-bottom: 0.2rem;
+}
+
+.fund-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.fund-label {
+  font-size: 0.75rem;
+  color: #4a6080;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.fund-value {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #b8cce8;
+  text-align: right;
+}
+

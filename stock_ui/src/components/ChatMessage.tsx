@@ -8,6 +8,7 @@ import { StatsBar } from "./StatsBar";
 import { StockChart } from "./StockChart";
 import { AnalysisPanel } from "./AnalysisPanel";
 import { UsageFooter } from "./UsageFooter";
+import { FundamentalsCard } from "./FundamentalsCard";
 
 interface Props {
   turn: CompletedTurn;
@@ -19,6 +20,7 @@ export function ChatMessage({ turn }: Props) {
       <div className="user-bubble">{turn.userMessage}</div>
       <div className="ai-response">
         {turn.error && <div className="error-box">{turn.error}</div>}
+        {turn.fundamentalsResult && <FundamentalsCard data={turn.fundamentalsResult} />}
         {turn.toolResult && <StatsBar data={turn.toolResult} />}
         {turn.toolResult && (
           <StockChart
