@@ -235,3 +235,60 @@ if history_data and "daily_closes" in history_data and not history_data.get("err
     sleep(0.5)  # ensure the plot window has time to render before closing
     plt.close(fig)
     console.print(f"\n[bold green]Chart saved →[/bold green] {out_path}")
+
+# ── Auto follow-up: execute the model's own suggested next step ───────
+console.rule("[bold yellow]Auto follow-up[/bold yellow]")
+console.print("[dim]Asking the model to choose and execute its own suggested next step…[/dim]\n")
+
+FOLLOWUP_PROMPT = (
+    "Please now automatically choose and execute the single most insightful "
+    "follow-up analysis you suggested at the end of your previous response. "
+    "Do not ask me which one — just pick it, do it, and show the result."
+)
+
+followup_resp = client.responses.create(
+    model=DEPLOYMENT,
+    input=FOLLOWUP_PROMPT,
+    previous_response_id=final.id,
+    tools=TOOLS,
+)
+
+# Agentic loop: handle any additional tool calls the model makes
+followup_total_input = followup_resp.usage.input_tokens
+followup_total_output = followup_resp.usage.output_tokens
+
+while any(item.type == "function_call" for item in followup_resp.output):
+    followup_tool_outputs = []
+    for item in followup_resp.output:
+        if item.type == "function_call":
+            console.print(f"  [dim]→ tool call: {item.name}({item.arguments})[/dim]")
+            result = TOOL_DISPATCH[item.name](json.loads(item.arguments))
+            console.print(f"  [dim]← tool result received[/dim]")
+            followup_tool_outputs.append({
+                "type": "function_call_output",
+                "call_id": item.call_id,
+                "output": result,
+            })
+
+    followup_resp = client.responses.create(
+        model=DEPLOYMENT,
+        input=followup_resp.output + followup_tool_outputs,
+        previous_response_id=followup_resp.id,
+        tools=TOOLS,
+    )
+    followup_total_input  += followup_resp.usage.input_tokens
+    followup_total_output += followup_resp.usage.output_tokens
+
+console.print(Panel(
+    followup_resp.output_text,
+    title=f"[bold yellow]{ticker_input} — Follow-up Analysis[/bold yellow]",
+    border_style="yellow",
+))
+
+followup_table = Table(title="Follow-up Usage", show_header=True)
+followup_table.add_column("Call", style="dim")
+followup_table.add_column("Input tok", justify="right")
+followup_table.add_column("Output tok", justify="right")
+followup_table.add_row("[bold]Follow-up total[/bold]",
+                       str(followup_total_input), str(followup_total_output))
+console.print(followup_table)
