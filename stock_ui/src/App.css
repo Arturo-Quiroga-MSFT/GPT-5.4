@@ -1007,3 +1007,104 @@
   color: #3e4a6e;
 }
 
+/* ── Judge panel ─────────────────────────────────────────────────── */
+.judge-panel {
+  background: #11111f;
+  border: 1px solid rgba(255, 215, 0, 0.18);
+  border-radius: 14px;
+  overflow: hidden;
+  animation: stepSlideIn 0.35s ease both;
+  box-shadow: 0 0 40px rgba(255, 215, 0, 0.05);
+}
+
+.judge-hdr {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.85rem 1.2rem;
+  background: linear-gradient(90deg, rgba(255,215,0,0.05), rgba(123,97,255,0.05));
+  border-bottom: 1px solid rgba(255, 215, 0, 0.1);
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.judge-hdr-left {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.judge-icon {
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.judge-title {
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #e8c840;
+}
+
+.judge-sub {
+  font-size: 0.75rem;
+  color: #4a5578;
+}
+
+.judge-hdr-right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.judge-stat {
+  font-size: 0.72rem;
+  color: #4a5578;
+}
+
+.judge-run-btn {
+  background: linear-gradient(135deg, #b8950a, #e8c840);
+  border: none;
+  color: #0d0d1a;
+  font-weight: 800;
+  border-radius: 8px;
+  padding: 0.45rem 1.1rem;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.15s;
+  white-space: nowrap;
+}
+
+.judge-run-btn:hover:not(:disabled) {
+  opacity: 0.88;
+  transform: translateY(-1px);
+}
+
+.judge-run-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.judge-running-badge {
+  font-size: 0.78rem;
+  color: #e8c840;
+}
+
+.judge-body {
+  padding: 1.1rem 1.2rem;
+}
+
+.judge-text {
+  font-size: 0.82rem;
+  color: #b0bcd8;
+  line-height: 1.75;
+  margin: 0;
+  white-space: pre-wrap;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+.judge-text--error {
+  color: #e74c3c;
+}
+

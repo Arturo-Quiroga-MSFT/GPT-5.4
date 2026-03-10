@@ -54,3 +54,10 @@ class CompareRequest(BaseModel):
             if level not in REASONING_LEVELS:
                 raise ValueError(f"Invalid level '{level}'. Must be one of: {REASONING_LEVELS}")
         return v
+
+
+class JudgeRequest(BaseModel):
+    query: str = Field(..., min_length=1, max_length=2000, description="The original question asked")
+    low_response: str = Field(..., min_length=1, description="Response from the low reasoning level")
+    medium_response: str = Field(..., min_length=1, description="Response from the medium reasoning level")
+    high_response: str = Field(..., min_length=1, description="Response from the high reasoning level")

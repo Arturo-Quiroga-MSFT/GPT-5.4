@@ -60,3 +60,24 @@ export async function openCompareStream(req: CompareRequest): Promise<Response> 
   }
   return res;
 }
+
+export interface JudgeRequest {
+  query: string;
+  low_response: string;
+  medium_response: string;
+  high_response: string;
+}
+
+/** Open the SSE stream for the meta-analysis judge endpoint. */
+export async function openJudgeStream(req: JudgeRequest): Promise<Response> {
+  const res = await fetch(`${API_BASE}/api/judge`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(req),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`API error ${res.status}: ${text}`);
+  }
+  return res;
+}

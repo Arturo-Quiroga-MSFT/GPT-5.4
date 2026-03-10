@@ -381,3 +381,88 @@ def run_compare_stream(message: str, levels: list[str]) -> Generator[str, None, 
             active -= 1
         else:
             yield item
+
+
+# ── Judge stream (meta-analysis of all 3 responses) ──────────────────
+JUDGE_SYSTEM_PROMPT = """\
+You are an expert AI response evaluator. You will be given a financial question and
+three responses generated at different reasoning effort levels (Low, Medium, High).
+
+Evaluate each response against these four criteria and score each 1–10:
+
+1. 📊 Data Quality — Does it cite real figures, prices, ratios, or sources?
+2. 🧠 Reasoning Depth — How thorough and multi-dimensional is the analysis?
+3. 🎯 Actionability — Does it give a clear, usable recommendation or conclusion?
+4. ✏️ Clarity — Is it well-structured, concise, and easy to follow?
+
+Output format (strictly follow this structure):
+
+## Scorecard
+
+| Criterion | Low | Medium | High |
+|-----------|-----|--------|------|
+| 📊 Data Quality | X/10 | X/10 | X/10 |
+| 🧠 Reasoning Depth | X/10 | X/10 | X/10 |
+| 🎯 Actionability | X/10 | X/10 | X/10 |
+| ✏️ Clarity | X/10 | X/10 | X/10 |
+| **Total** | X/40 | X/40 | X/40 |
+
+## Overall Ranking
+
+🥇 [Winner level] — one sentence why
+🥈 [Second level] — one sentence why
+🥉 [Third level] — one sentence why
+
+## Key Observations
+
+Two or three bullet points highlighting the most interesting differences between
+the responses (e.g. which level caught a detail others missed, quality vs speed
+tradeoffs, etc.).
+
+Be concise, fair, and specific. Do not repeat the full responses back.
+"""
+
+
+def run_judge_stream(query: str, low: str, medium: str, high: str) -> Generator[str, None, None]:
+    """
+    Sends all three responses to GPT-5.4 at low reasoning for fast meta-analysis.
+    Streams back a structured scorecard + ranking.
+    Event types: judge_start, judge_delta, judge_done, error.
+    """
+    client = get_client()
+
+    prompt = (
+        f"## Original Question\n{query}\n\n"
+        f"## Low Reasoning Response\n{low}\n\n"
+        f"## Medium Reasoning Response\n{medium}\n\n"
+        f"## High Reasoning Response\n{high}"
+    )
+
+    yield _sse("judge_start", {})
+
+    try:
+        import time
+        t0 = time.monotonic()
+        stream = client.responses.create(
+            model=DEPLOYMENT,
+            input=prompt,
+            instructions=JUDGE_SYSTEM_PROMPT,
+            reasoning={"effort": "low"},
+            stream=True,
+        )
+        total_input = 0
+        total_output = 0
+        for event in stream:
+            if event.type == "response.output_text.delta":
+                yield _sse("judge_delta", {"delta": event.delta})
+            elif event.type == "response.completed":
+                total_input = event.response.usage.input_tokens
+                total_output = event.response.usage.output_tokens
+        elapsed = round(time.monotonic() - t0, 1)
+        yield _sse("judge_done", {
+            "elapsed": elapsed,
+            "input_tokens": total_input,
+            "output_tokens": total_output,
+        })
+    except Exception as e:
+        yield _sse("error", {"message": f"Judge failed: {e}"})

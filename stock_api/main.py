@@ -20,8 +20,8 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 
-from models import AnalyseRequest, ChatRequest, CompareRequest
-from llm_service import run_analysis_stream, run_chat_stream, run_compare_stream
+from models import AnalyseRequest, ChatRequest, CompareRequest, JudgeRequest
+from llm_service import run_analysis_stream, run_chat_stream, run_compare_stream, run_judge_stream
 
 # Origins allowed to call the API — extend as needed for production
 ALLOWED_ORIGINS = [
@@ -128,6 +128,28 @@ def compare(req: CompareRequest):
     """
     return StreamingResponse(
         run_compare_stream(req.message, req.levels),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
+            "Connection": "keep-alive",
+        },
+    )
+
+
+@app.post("/api/judge")
+def judge(req: JudgeRequest):
+    """
+    Stream a meta-analysis that scores and ranks the three comparison responses.
+
+    Event types:
+        judge_start  — analysis begun
+        judge_delta  — one token of verdict text
+        judge_done   — complete (elapsed, input_tokens, output_tokens)
+        error        — something went wrong
+    """
+    return StreamingResponse(
+        run_judge_stream(req.query, req.low_response, req.medium_response, req.high_response),
         media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",

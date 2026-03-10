@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useCompareSession, LEVELS } from "../hooks/useCompareSession";
 import { CompareColumn } from "./CompareColumn";
+import { JudgePanel } from "./JudgePanel";
 
 const EXAMPLE_QUERIES = [
   "Is NVDA fairly valued right now?",
@@ -9,7 +10,7 @@ const EXAMPLE_QUERIES = [
 ];
 
 export function ComparePage() {
-  const { columns, isRunning, run, reset } = useCompareSession();
+  const { columns, isRunning, lastQuery, run, reset } = useCompareSession();
   const [input, setInput] = useState("");
 
   const hasResults = LEVELS.some((l) => columns[l].status !== "idle");
@@ -82,6 +83,9 @@ export function ComparePage() {
           ))}
         </div>
       )}
+
+      {/* ── Judge panel (appears when all 3 done) ─────────────── */}
+      <JudgePanel query={lastQuery} columns={columns} />
     </div>
   );
 }
