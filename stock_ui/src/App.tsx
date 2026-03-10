@@ -1,5 +1,7 @@
 import "./App.css";
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import { Routes, Route, NavLink } from "react-router-dom";
 import { useChatSession, type CompletedTurn } from "./hooks/useChatSession";
 import { ChatMessage } from "./components/ChatMessage";
 import { ChatInput } from "./components/ChatInput";
@@ -8,6 +10,8 @@ import { StockChart } from "./components/StockChart";
 import { AnalysisPanel } from "./components/AnalysisPanel";
 import { StatusBadge } from "./components/StatusBadge";
 import { FundamentalsCard } from "./components/FundamentalsCard";
+import { ThoughtPanel } from "./components/ThoughtPanel";
+import { ComparePage } from "./components/ComparePage";
 
 const TECHNICAL_PROMPTS = [
   "Analyse MSFT for the last 60 days",
@@ -127,10 +131,17 @@ function turnsToMarkdown(turns: CompletedTurn[]): string {
   return lines.join("\n");
 }
 
-function App() {
-  const { turns, streaming, isStreaming, sendMessage, reset } = useChatSession();
+function ChatPageContent() {
+  const { turns, streaming, thoughtSteps, isStreaming, sendMessage, reset } = useChatSession();
   const bottomRef = useRef<HTMLDivElement>(null);
+  const [showThoughts, setShowThoughts] = useState(false);
+  const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null);
   const isEmpty = turns.length === 0 && !streaming;
+
+  // Find the portal slot in the header once mounted
+  useEffect(() => {
+    setPortalTarget(document.getElementById("chat-header-portal"));
+  }, []);
 
   const saveChat = useCallback(() => {
     if (turns.length === 0) return;
@@ -151,26 +162,32 @@ function App() {
   }, [turns.length, streaming?.analysisText]);
 
   return (
-    <div className="chat-app">
-      {/* ── Header ───────────────────────────────────────────────── */}
-      <header className="chat-header">
-        <div className="chat-header-left">
-          <h1>Stock Analysis</h1>
-          <span className="subtitle">GPT-5.4 via Azure OpenAI</span>
-        </div>
-        {!isEmpty && (
-          <div className="chat-header-actions">
-            <button className="save-chat-btn" onClick={saveChat} disabled={isStreaming || turns.length === 0}>
-              Save chat ↓
-            </button>
-            <button className="new-chat-btn" onClick={reset} disabled={isStreaming}>
-              New chat
-            </button>
-          </div>
-        )}
-      </header>
+    <>
+      {/* ── Inject chat actions into the header portal ──────── */}
+      {portalTarget && createPortal(
+        <div className="chat-header-actions">
+          <button
+            className={`thoughts-toggle-btn${showThoughts ? " active" : ""}`}
+            onClick={() => setShowThoughts((v) => !v)}
+            title={showThoughts ? "Hide thought process" : "Show thought process"}
+          >
+            ⚡ Thoughts
+          </button>
+          {!isEmpty && (
+            <>
+              <button className="save-chat-btn" onClick={saveChat} disabled={isStreaming || turns.length === 0}>
+                Save chat ↓
+              </button>
+              <button className="new-chat-btn" onClick={reset} disabled={isStreaming}>
+                New chat
+              </button>
+            </>
+          )}
+        </div>,
+        portalTarget
+      )}
 
-      {/* ── Message area ─────────────────────────────────────────── */}
+      {/* ── Message area ─────────────────────────────────────── */}
       <div className="chat-messages">
         {isEmpty && (
           <div className="empty-state">
@@ -236,10 +253,48 @@ function App() {
         <div ref={bottomRef} />
       </div>
 
-      {/* ── Input ────────────────────────────────────────────────── */}
+      {/* ── Thought Process Panel ────────────────────────────── */}
+      <ThoughtPanel
+        steps={thoughtSteps}
+        isStreaming={isStreaming}
+        onClose={() => setShowThoughts(false)}
+        open={showThoughts}
+      />
+
+      {/* ── Input ────────────────────────────────────────────── */}
       <div className="chat-footer">
         <ChatInput onSend={sendMessage} disabled={isStreaming} />
       </div>
+    </>
+  );
+}
+
+function App() {
+  return (
+    <div className="chat-app">
+      {/* ── Header ───────────────────────────────────────────────── */}
+      <header className="chat-header">
+        <div className="chat-header-left">
+          <h1>Stock Analysis</h1>
+          <span className="subtitle">GPT-5.4 via Azure OpenAI</span>
+        </div>
+        <nav className="tab-bar">
+          <NavLink to="/" end className={({ isActive }) => `tab-link${isActive ? " active" : ""}`}>
+            💬 Chat
+          </NavLink>
+          <NavLink to="/compare" className={({ isActive }) => `tab-link${isActive ? " active" : ""}`}>
+            ⚡ Compare
+          </NavLink>
+        </nav>
+        {/* Chat-page actions are rendered inside ChatPageContent */}
+        <div id="chat-header-portal" />
+      </header>
+
+      {/* ── Routed pages ─────────────────────────────────────────── */}
+      <Routes>
+        <Route path="/" element={<ChatPageContent />} />
+        <Route path="/compare" element={<ComparePage />} />
+      </Routes>
     </div>
   );
 }

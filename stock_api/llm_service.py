@@ -23,6 +23,8 @@ Phase 2 (the main analysis) provides the primary streaming experience.
 """
 
 import json
+import queue
+import threading
 from typing import Generator
 
 from config import DEPLOYMENT, get_client
@@ -212,6 +214,7 @@ def run_chat_stream(message: str, previous_response_id: str | None) -> Generator
     total_output = 0
 
     yield _sse("status", {"message": f"Calling {DEPLOYMENT}…"})
+    yield _sse("thinking_step", {"text": "Analysing your question…"})
 
     # ── Step 1: Non-streaming call (detect / execute tool calls) ──────
     kwargs: dict = {
@@ -236,6 +239,12 @@ def run_chat_stream(message: str, previous_response_id: str | None) -> Generator
     for item in resp.output:
         if item.type == "function_call":
             args = json.loads(item.arguments)
+            _ticker = args.get("ticker", "?").upper()
+            _step_label = {
+                "get_stock_history": f"Fetching price history for {_ticker}",
+                "get_fundamentals": f"Pulling fundamentals for {_ticker}",
+            }.get(item.name, f"Calling {item.name}")
+            yield _sse("thinking_step", {"text": _step_label + "…"})
             yield _sse("tool_call", {"name": item.name, "args": args})
 
             result_str = TOOL_DISPATCH[item.name](args)
@@ -245,6 +254,7 @@ def run_chat_stream(message: str, previous_response_id: str | None) -> Generator
                 yield _sse("error", {"message": result_data["error"]})
                 return
 
+            yield _sse("thinking_step", {"text": f"Data loaded for {_ticker}"})
             # Emit the right event type so the frontend can render the correct card
             event_type = "fundamentals_result" if item.name == "get_fundamentals" else "tool_result"
             yield _sse(event_type, result_data)
@@ -257,6 +267,7 @@ def run_chat_stream(message: str, previous_response_id: str | None) -> Generator
             )
 
     # ── Step 2a: Tool calls happened — stream the synthesis ───────────
+    yield _sse("thinking_step", {"text": "Writing the analysis…"})
     yield _sse("analysis_start", {})
     response_id: str | None = None
 
@@ -284,6 +295,7 @@ def run_chat_stream(message: str, previous_response_id: str | None) -> Generator
         response_id = resp.id
 
     yield _sse("analysis_done", {})
+    yield _sse("thinking_step", {"text": "Response complete"})
     yield _sse(
         "done",
         {
@@ -294,3 +306,77 @@ def run_chat_stream(message: str, previous_response_id: str | None) -> Generator
             },
         },
     )
+
+
+# ── Compare stream (3 reasoning levels in parallel) ───────────────────
+COMPARE_SYSTEM_PROMPT = (
+    "You are a concise financial analysis assistant. "
+    "Answer the user's question directly and analytically. "
+    "Keep responses focused and well-structured."
+)
+
+
+def _run_one_level(message: str, level: str, out: queue.Queue) -> None:
+    """
+    Runs a single reasoning-level call and pushes SSE strings into `out`.
+    Each SSE event has an extra `level` field so the frontend can route it.
+    All events are prefixed with `cmp_` to avoid collisions.
+    Sentinel: None pushed when done.
+    """
+    client = get_client()
+
+    def sse(event_type: str, data: dict) -> str:
+        data["level"] = level
+        return f"data: {json.dumps({'type': event_type, 'data': data})}\n\n"
+
+    try:
+        out.put(sse("cmp_start", {"message": f"Starting {level} reasoning…"}))
+
+        import time
+        t0 = time.monotonic()
+
+        stream = client.responses.create(
+            model=DEPLOYMENT,
+            input=message,
+            instructions=COMPARE_SYSTEM_PROMPT,
+            reasoning={"effort": level},
+            stream=True,
+        )
+
+        out.put(sse("cmp_streaming", {}))
+
+        for event in stream:
+            if event.type == "response.output_text.delta":
+                out.put(sse("cmp_delta", {"delta": event.delta}))
+            elif event.type == "response.completed":
+                elapsed = round(time.monotonic() - t0, 1)
+                usage = event.response.usage
+                out.put(sse("cmp_done", {
+                    "elapsed": elapsed,
+                    "input_tokens": usage.input_tokens,
+                    "output_tokens": usage.output_tokens,
+                }))
+    except Exception as e:
+        out.put(sse("cmp_error", {"message": str(e)}))
+    finally:
+        out.put(None)
+
+
+def run_compare_stream(message: str, levels: list[str]) -> Generator[str, None, None]:
+    """
+    Runs all requested reasoning levels in parallel threads, multiplexing
+    their SSE output into a single stream. Each event carries a `level` field.
+    """
+    q: queue.Queue = queue.Queue()
+    active = len(levels)
+
+    for level in levels:
+        t = threading.Thread(target=_run_one_level, args=(message, level, q), daemon=True)
+        t.start()
+
+    while active > 0:
+        item = q.get()
+        if item is None:
+            active -= 1
+        else:
+            yield item

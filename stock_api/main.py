@@ -20,8 +20,8 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 
-from models import AnalyseRequest, ChatRequest
-from llm_service import run_analysis_stream, run_chat_stream
+from models import AnalyseRequest, ChatRequest, CompareRequest
+from llm_service import run_analysis_stream, run_chat_stream, run_compare_stream
 
 # Origins allowed to call the API — extend as needed for production
 ALLOWED_ORIGINS = [
@@ -101,6 +101,33 @@ def chat(req: ChatRequest):
     """
     return StreamingResponse(
         run_chat_stream(req.message, req.previous_response_id),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
+            "Connection": "keep-alive",
+        },
+    )
+
+
+@app.post("/api/compare")
+def compare(req: CompareRequest):
+    """
+    Run the same message at multiple reasoning effort levels in parallel and
+    stream all responses as a single multiplexed SSE feed.
+
+    Each event carries a `level` field ("low" | "medium" | "high") so the
+    frontend can route tokens to the correct column.
+
+    Event types:
+        cmp_start     — level thread started
+        cmp_streaming — model has begun generating
+        cmp_delta     — one token (delta: str)
+        cmp_done      — level finished (elapsed: float, input_tokens, output_tokens)
+        cmp_error     — level failed (message: str)
+    """
+    return StreamingResponse(
+        run_compare_stream(req.message, req.levels),
         media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",

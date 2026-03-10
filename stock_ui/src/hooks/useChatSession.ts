@@ -13,6 +13,7 @@ import { openChatStream } from "../api/client";
 // Re-use the canonical type definitions so all components stay in sync.
 import type { ToolResult, UsageInfo, StreamPhase } from "./useAnalysisStream";
 import type { FundamentalsResult } from "../components/FundamentalsCard";
+import type { ThoughtStep } from "../components/ThoughtPanel";
 
 export interface CompletedTurn {
   id: string;
@@ -38,6 +39,7 @@ export function useChatSession() {
   const [turns, setTurns] = useState<CompletedTurn[]>([]);
   const [streaming, setStreaming] = useState<StreamingState | null>(null);
   const [lastResponseId, setLastResponseId] = useState<string | null>(null);
+  const [thoughtSteps, setThoughtSteps] = useState<ThoughtStep[]>([]);
   const abortRef = useRef<AbortController | null>(null);
 
   const sendMessage = useCallback(
@@ -72,6 +74,8 @@ export function useChatSession() {
       let accToolResult: ToolResult | undefined;
       let accFundamentalsResult: FundamentalsResult | undefined;
       let accAnalysisText = "";
+      let accThoughtSteps: ThoughtStep[] = [];
+      setThoughtSteps([]);
 
       while (true) {
         const { done, value } = await reader.read();
@@ -124,6 +128,16 @@ export function useChatSession() {
                 s ? { ...s, fundamentalsResult: data as unknown as FundamentalsResult } : null
               );
               break;
+
+            case "thinking_step": {
+              const step: ThoughtStep = {
+                id: accThoughtSteps.length,
+                text: (data.text as string) ?? "",
+              };
+              accThoughtSteps = [...accThoughtSteps, step];
+              setThoughtSteps([...accThoughtSteps]);
+              break;
+            }
 
             case "analysis_start":
               setStreaming((s) => (s ? { ...s, phase: "analysing", analysisText: "" } : null));
@@ -186,11 +200,13 @@ export function useChatSession() {
     setTurns([]);
     setStreaming(null);
     setLastResponseId(null);
+    setThoughtSteps([]);
   }, []);
 
   return {
     turns,
     streaming,
+    thoughtSteps,
     lastResponseId,
     isStreaming: streaming !== null,
     sendMessage,

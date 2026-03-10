@@ -30,3 +30,27 @@ class ChatRequest(BaseModel):
         if not v:
             raise ValueError("Message cannot be empty")
         return v
+
+
+REASONING_LEVELS = {"low", "medium", "high"}
+
+
+class CompareRequest(BaseModel):
+    message: str = Field(..., min_length=1, max_length=2000, description="Query to run at all reasoning levels")
+    levels: list[str] = Field(default=["low", "medium", "high"], description="Reasoning effort levels to compare")
+
+    @field_validator("message")
+    @classmethod
+    def clean_message(cls, v: str) -> str:
+        v = v.strip()
+        if not v:
+            raise ValueError("Message cannot be empty")
+        return v
+
+    @field_validator("levels")
+    @classmethod
+    def validate_levels(cls, v: list[str]) -> list[str]:
+        for level in v:
+            if level not in REASONING_LEVELS:
+                raise ValueError(f"Invalid level '{level}'. Must be one of: {REASONING_LEVELS}")
+        return v

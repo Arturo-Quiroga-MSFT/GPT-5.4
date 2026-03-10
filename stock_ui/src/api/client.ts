@@ -41,3 +41,22 @@ export async function openChatStream(req: ChatRequest): Promise<Response> {
   }
   return res;
 }
+
+export interface CompareRequest {
+  message: string;
+  levels?: string[];
+}
+
+/** Open the multiplexed SSE stream for the reasoning-level comparison endpoint. */
+export async function openCompareStream(req: CompareRequest): Promise<Response> {
+  const res = await fetch(`${API_BASE}/api/compare`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(req),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`API error ${res.status}: ${text}`);
+  }
+  return res;
+}
