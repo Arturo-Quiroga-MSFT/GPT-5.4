@@ -33,6 +33,6 @@ Thumbs.db
 
 # Output files
 outputs/
-anthropic_comparison/
 finance/*_close_chart.png
+
 
