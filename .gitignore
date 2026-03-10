@@ -35,4 +35,7 @@ Thumbs.db
 outputs/
 finance/*_close_chart.png
 
+# Dev script runtime files
+logs/
+.pids/
 
