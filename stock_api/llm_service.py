@@ -340,6 +340,7 @@ def _run_one_level(message: str, level: str, out: queue.Queue) -> None:
             input=message,
             instructions=COMPARE_SYSTEM_PROMPT,
             reasoning={"effort": level},
+            tools=[{"type": "web_search_preview"}],
             stream=True,
         )
 
