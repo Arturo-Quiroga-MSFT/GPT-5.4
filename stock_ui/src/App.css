@@ -6,6 +6,7 @@
   display: flex;
   flex-direction: column;
   font-family: system-ui, -apple-system, sans-serif;
+  background-color: #12121c;
 }
 
 /* ── Header ──────────────────────────────────────────────────────── */
@@ -26,30 +27,60 @@
 }
 
 .chat-header h1 {
-  font-size: 1.2rem;
-  font-weight: 700;
+  font-size: 1.25rem;
+  font-weight: 800;
   margin: 0;
-  color: #e0e0e0;
+  background: linear-gradient(90deg, #00d4ff, #7b61ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.01em;
 }
 
 .subtitle {
-  color: #666;
-  font-size: 0.8rem;
+  color: #6b7db3;
+  font-size: 0.78rem;
+  letter-spacing: 0.02em;
 }
 
-.new-chat-btn {
+.chat-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.save-chat-btn {
   background: transparent;
-  border: 1px solid #333;
-  color: #aaa;
+  border: 1px solid #2e3a5a;
+  color: #7b99d4;
   border-radius: 6px;
   padding: 0.3rem 0.85rem;
   font-size: 0.82rem;
   cursor: pointer;
-  transition: border-color 0.15s, color 0.15s;
+  transition: border-color 0.2s, color 0.2s, background 0.2s;
 }
 
-.new-chat-btn:hover:not(:disabled) { border-color: #888; color: #e0e0e0; }
-.new-chat-btn:disabled { opacity: 0.4; cursor: default; }
+.save-chat-btn:hover:not(:disabled) {
+  border-color: #2ecc71;
+  color: #2ecc71;
+  background: rgba(46, 204, 113, 0.06);
+}
+
+.save-chat-btn:disabled { opacity: 0.35; cursor: default; }
+
+.new-chat-btn {
+  background: transparent;
+  border: 1px solid #2e3a5a;
+  color: #7b99d4;
+  border-radius: 6px;
+  padding: 0.3rem 0.85rem;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s, background 0.2s;
+}
+
+.new-chat-btn:hover:not(:disabled) { border-color: #00d4ff; color: #00d4ff; background: rgba(0,212,255,0.06); }
+.new-chat-btn:disabled { opacity: 0.35; cursor: default; }
 
 /* ── Message list ────────────────────────────────────────────────── */
 .chat-messages {
@@ -59,6 +90,7 @@
   display: flex;
   flex-direction: column;
   gap: 1.75rem;
+  background-color: #12121c;
 }
 
 /* ── Empty state ─────────────────────────────────────────────────── */
@@ -74,16 +106,20 @@
 }
 
 .empty-title {
-  font-size: 1.4rem;
-  font-weight: 600;
-  color: #e0e0e0;
+  font-size: 1.65rem;
+  font-weight: 800;
+  background: linear-gradient(90deg, #ffffff, #a8c8ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
   margin: 0;
+  letter-spacing: -0.02em;
 }
 
 .empty-sub {
-  font-size: 0.9rem;
-  color: #666;
-  margin: 0 0 1rem;
+  font-size: 0.92rem;
+  color: #7b99d4;
+  margin: 0 0 1.25rem;
 }
 
 .example-chips {
@@ -94,17 +130,21 @@
 }
 
 .example-chip {
-  background: #1e1e2e;
-  border: 1px solid #333;
-  color: #aaa;
+  background: rgba(123, 97, 255, 0.08);
+  border: 1px solid rgba(123, 97, 255, 0.3);
+  color: #b0a8ff;
   border-radius: 20px;
-  padding: 0.45rem 1rem;
+  padding: 0.5rem 1.1rem;
   font-size: 0.85rem;
   cursor: pointer;
-  transition: border-color 0.15s, color 0.15s;
+  transition: border-color 0.2s, color 0.2s, background 0.2s;
 }
 
-.example-chip:hover { border-color: #00b4d8; color: #e0e0e0; }
+.example-chip:hover {
+  border-color: #00d4ff;
+  color: #e8f4ff;
+  background: rgba(0, 212, 255, 0.08);
+}
 
 /* ── Chat turns ──────────────────────────────────────────────────── */
 .chat-turn {
@@ -168,23 +208,25 @@
 
 .chat-input:disabled { opacity: 0.5; }
 
-.chat-input::placeholder { color: #555; }
+.chat-input::placeholder { color: #4a5568; }
 
 .send-btn {
-  background: #00b4d8;
-  color: #000;
+  background: linear-gradient(135deg, #00d4ff, #7b61ff);
+  color: #fff;
   border: none;
   border-radius: 10px;
   padding: 0.65rem 1.1rem;
   font-size: 0.9rem;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
-  transition: opacity 0.15s;
+  transition: opacity 0.15s, transform 0.1s;
   white-space: nowrap;
+  letter-spacing: 0.02em;
 }
 
-.send-btn:disabled { opacity: 0.4; cursor: default; }
-.send-btn:not(:disabled):hover { opacity: 0.85; }
+.send-btn:disabled { opacity: 0.35; cursor: default; }
+.send-btn:not(:disabled):hover { opacity: 0.88; transform: translateY(-1px); }
+.send-btn:not(:disabled):active { transform: translateY(0); }
 
 /* ── Status badge ────────────────────────────────────────────────── */
 .status-badge {
@@ -237,8 +279,8 @@
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
-  background: #1e1e2e;
-  border: 1px solid #2a2a3a;
+  background: #161828;
+  border: 1px solid #1e2a40;
   border-radius: 10px;
   padding: 0.9rem 1.25rem;
 }
@@ -250,28 +292,29 @@
 }
 
 .stat-label {
-  font-size: 0.7rem;
-  color: #666;
+  font-size: 0.68rem;
+  color: #5a7ab0;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.08em;
+  font-weight: 600;
 }
 
 .stat-value {
-  font-size: 1.05rem;
-  font-weight: 600;
-  color: #e0e0e0;
+  font-size: 1.08rem;
+  font-weight: 700;
+  color: #d4e8ff;
 }
 
 .stat-value.high { color: #2ecc71; }
 .stat-value.low  { color: #e74c3c; }
 .stat-value.positive { color: #2ecc71; }
 .stat-value.negative { color: #e74c3c; }
-.stat-value.period { font-size: 0.82rem; font-weight: 400; color: #888; }
+.stat-value.period { font-size: 0.82rem; font-weight: 400; color: #5a7ab0; }
 
 /* ── Chart ───────────────────────────────────────────────────────── */
 .chart-wrapper {
-  background: #1e1e2e;
-  border: 1px solid #2a2a3a;
+  background: #161828;
+  border: 1px solid #1e2a40;
   border-radius: 10px;
   padding: 1rem 1.25rem 0.5rem;
 }
@@ -279,13 +322,14 @@
 .chart-title {
   margin: 0 0 0.75rem;
   font-size: 0.9rem;
-  font-weight: 600;
-  color: #aaa;
+  font-weight: 700;
+  color: #7b99d4;
+  letter-spacing: 0.03em;
 }
 
 /* ── Analysis panels ─────────────────────────────────────────────── */
 .analysis-panel {
-  background: #1e1e2e;
+  background: #161828;
   border: 1px solid;
   border-radius: 10px;
   padding: 1rem 1.25rem;
@@ -301,8 +345,8 @@
 
 .panel-body {
   font-size: 0.95rem;
-  line-height: 1.65;
-  color: #ccc;
+  line-height: 1.7;
+  color: #b8cce8;
   white-space: pre-wrap;
 }
 
@@ -324,10 +368,10 @@
   gap: 1.25rem;
   flex-wrap: wrap;
   font-size: 0.78rem;
-  color: #555;
-  border-top: 1px solid #2a2a3a;
+  color: #445577;
+  border-top: 1px solid #1e2a40;
   padding-top: 0.6rem;
 }
 
-.usage-footer strong { color: #888; }
+.usage-footer strong { color: #7b99d4; }
 

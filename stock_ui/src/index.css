@@ -27,10 +27,12 @@ body {
   min-width: 320px;
   height: 100vh;
   overflow: hidden;
+  background-color: #12121c;
 }
 
 #root {
   height: 100%;
+  background-color: #12121c;
 }
 
 h1 {
