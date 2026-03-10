@@ -119,7 +119,24 @@
 .empty-sub {
   font-size: 0.92rem;
   color: #7b99d4;
-  margin: 0 0 1.25rem;
+  margin: 0 0 1.5rem;
+}
+
+.example-section {
+  margin-bottom: 1rem;
+}
+
+.example-section-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #7b61ff;
+  margin: 0 0 0.5rem;
+}
+
+.example-section-label.fundamental {
+  color: #00c896;
 }
 
 .example-chips {
@@ -144,6 +161,18 @@
   border-color: #00d4ff;
   color: #e8f4ff;
   background: rgba(0, 212, 255, 0.08);
+}
+
+.example-chip.fundamental-chip {
+  background: rgba(0, 200, 150, 0.07);
+  border-color: rgba(0, 200, 150, 0.3);
+  color: #6ee8c2;
+}
+
+.example-chip.fundamental-chip:hover {
+  border-color: #00c896;
+  color: #e8fff8;
+  background: rgba(0, 200, 150, 0.14);
 }
 
 /* ── Chat turns ──────────────────────────────────────────────────── */

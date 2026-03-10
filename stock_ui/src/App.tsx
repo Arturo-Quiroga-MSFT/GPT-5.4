@@ -9,10 +9,16 @@ import { AnalysisPanel } from "./components/AnalysisPanel";
 import { StatusBadge } from "./components/StatusBadge";
 import { FundamentalsCard } from "./components/FundamentalsCard";
 
-const EXAMPLE_PROMPTS = [
+const TECHNICAL_PROMPTS = [
   "Analyse MSFT for the last 60 days",
   "How has AAPL performed over the past 90 days?",
   "Show me NVDA's price history for 30 days",
+];
+
+const FUNDAMENTAL_PROMPTS = [
+  "Give me a full fundamental analysis of MSFT",
+  "Is AAPL cheap right now?",
+  "What do analysts think about NVDA?",
 ];
 
 function fmt(n: number) {
@@ -170,14 +176,27 @@ function App() {
           <div className="empty-state">
             <p className="empty-title">Ask about any stock</p>
             <p className="empty-sub">
-              I'll fetch real-time price data and analyse the trend for you.
+              I'll fetch real-time price data, analyse trends, and dig into fundamentals for you.
             </p>
-            <div className="example-chips">
-              {EXAMPLE_PROMPTS.map((p) => (
-                <button key={p} className="example-chip" onClick={() => sendMessage(p)}>
-                  {p}
-                </button>
-              ))}
+            <div className="example-section">
+              <p className="example-section-label">Technical</p>
+              <div className="example-chips">
+                {TECHNICAL_PROMPTS.map((p) => (
+                  <button key={p} className="example-chip" onClick={() => sendMessage(p)}>
+                    {p}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="example-section">
+              <p className="example-section-label fundamental">Fundamental</p>
+              <div className="example-chips">
+                {FUNDAMENTAL_PROMPTS.map((p) => (
+                  <button key={p} className="example-chip fundamental-chip" onClick={() => sendMessage(p)}>
+                    {p}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         )}
