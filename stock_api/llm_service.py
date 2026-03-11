@@ -283,6 +283,7 @@ def run_chat_stream(message: str, previous_response_id: str | None) -> Generator
     response_id: str | None = None
 
     if tool_outputs:
+        completed_response = None
         try:
             stream = client.responses.create(
                 model=DEPLOYMENT,
@@ -294,12 +295,53 @@ def run_chat_stream(message: str, previous_response_id: str | None) -> Generator
                 if event.type == "response.output_text.delta":
                     yield _sse("analysis_delta", {"delta": event.delta})
                 elif event.type == "response.completed":
+                    completed_response = event.response
                     response_id = event.response.id
                     total_input += event.response.usage.input_tokens
                     total_output += event.response.usage.output_tokens
         except Exception as e:
             yield _sse("error", {"message": f"Streaming failed: {e}"})
             return
+
+        # ── Step 2a-cont: Handle any tool calls the streaming response made ──
+        if completed_response:
+            while any(item.type == "function_call" for item in completed_response.output):
+                followup_tool_outputs = []
+                for item in completed_response.output:
+                    if item.type == "function_call":
+                        args = json.loads(item.arguments)
+                        result_str = TOOL_DISPATCH.get(item.name, lambda _: '{"error":"unknown tool"}')(args)
+                        result_data = json.loads(result_str)
+                        # Emit overlay / result events so the frontend can render them
+                        if item.name == "get_fundamentals":
+                            yield _sse("fundamentals_result", result_data)
+                        elif item.name == "get_chart_indicators":
+                            yield _sse("chart_overlay", result_data)
+                        elif item.name == "get_stock_history":
+                            yield _sse("tool_result", result_data)
+                        followup_tool_outputs.append(
+                            {
+                                "type": "function_call_output",
+                                "call_id": item.call_id,
+                                "output": result_str,
+                            }
+                        )
+                try:
+                    followup_resp = client.responses.create(
+                        model=DEPLOYMENT,
+                        input=completed_response.output + followup_tool_outputs,
+                        previous_response_id=completed_response.id,
+                        tools=CHAT_TOOLS,
+                    )
+                    total_input += followup_resp.usage.input_tokens
+                    total_output += followup_resp.usage.output_tokens
+                    response_id = followup_resp.id
+                    if followup_resp.output_text:
+                        yield _sse("analysis_delta", {"delta": followup_resp.output_text})
+                    completed_response = followup_resp
+                except Exception as e:
+                    yield _sse("error", {"message": f"Follow-up tool handling failed: {e}"})
+                    return
     else:
         # ── Step 2b: No tool calls — emit text from step 1 directly ───
         yield _sse("analysis_delta", {"delta": resp.output_text})
