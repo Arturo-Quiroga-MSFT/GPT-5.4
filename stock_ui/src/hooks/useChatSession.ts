@@ -22,6 +22,7 @@ export interface CompletedTurn {
   fundamentalsResult?: FundamentalsResult;
   analysisText: string;
   usage?: UsageInfo;
+  elapsed?: number;  // seconds, wall-clock for the full turn
   error?: string;
 }
 
@@ -47,6 +48,8 @@ export function useChatSession() {
       abortRef.current?.abort();
       const controller = new AbortController();
       abortRef.current = controller;
+
+      const turnStart = Date.now();
 
       setStreaming({
         userMessage: text,
@@ -185,6 +188,7 @@ export function useChatSession() {
             case "done": {
               const responseId = (data.response_id as string) ?? null;
               const usage = data.usage as UsageInfo;
+              const elapsed = Math.round((Date.now() - turnStart) / 100) / 10;
               setLastResponseId(responseId);
               setTurns((prev) => [
                 ...prev,
@@ -195,6 +199,7 @@ export function useChatSession() {
                   fundamentalsResult: accFundamentalsResult,
                   analysisText: accAnalysisText,
                   usage,
+                  elapsed,
                 },
               ]);
               setStreaming(null);

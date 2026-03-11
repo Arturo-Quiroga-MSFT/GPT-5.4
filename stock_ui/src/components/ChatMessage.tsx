@@ -36,7 +36,7 @@ export function ChatMessage({ turn }: Props) {
             accent="#00b4d8"
           />
         )}
-        {turn.usage && <UsageFooter usage={turn.usage} />}
+        {turn.usage && <UsageFooter usage={turn.usage} elapsed={turn.elapsed} />}
       </div>
     </div>
   );

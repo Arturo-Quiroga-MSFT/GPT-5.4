@@ -386,6 +386,47 @@
   white-space: pre-wrap;
 }
 
+/* ── Markdown table ──────────────────────────────────────────────── */
+.md-table-wrapper {
+  overflow-x: auto;
+  margin: 0.75rem 0;
+  border-radius: 8px;
+  border: 1px solid #1e2a40;
+}
+
+.md-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+  white-space: nowrap;
+}
+
+.md-table thead tr {
+  background: #1a2040;
+}
+
+.md-table th {
+  padding: 0.5rem 0.9rem;
+  color: #7b99d4;
+  font-weight: 600;
+  text-align: left;
+  border-bottom: 1px solid #263050;
+}
+
+.md-table td {
+  padding: 0.45rem 0.9rem;
+  color: #b8cce8;
+  border-bottom: 1px solid #1a2035;
+}
+
+.md-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.md-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
 .cursor {
   display: inline-block;
   width: 2px;
@@ -410,6 +451,8 @@
 }
 
 .usage-footer strong { color: #7b99d4; }
+.usage-elapsed { color: #5a8a6a; }
+.usage-elapsed strong { color: #5dbb7a; }
 
 /* ── Fundamentals card ──────────────────────────────────────────── */
 .fundamentals-card {
