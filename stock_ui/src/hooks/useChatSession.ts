@@ -11,7 +11,7 @@
 import { useCallback, useRef, useState } from "react";
 import { openChatStream } from "../api/client";
 // Re-use the canonical type definitions so all components stay in sync.
-import type { ToolResult, UsageInfo, StreamPhase } from "./useAnalysisStream";
+import type { ToolResult, UsageInfo, StreamPhase, ChartOverlayResult, ChartOverlays } from "./useAnalysisStream";
 import type { FundamentalsResult } from "../components/FundamentalsCard";
 import type { ThoughtStep } from "../components/ThoughtPanel";
 
@@ -149,6 +149,33 @@ export function useChatSession() {
               setStreaming((s) =>
                 s ? { ...s, analysisText: s.analysisText + delta } : null
               );
+              break;
+            }
+
+            case "chart_overlay": {
+              // Merge overlay data into the most recent turn that has a toolResult
+              // for the same ticker — this updates the existing chart in-place.
+              const overlayResult = data as unknown as ChartOverlayResult;
+              const newOverlays: ChartOverlays = overlayResult.overlays ?? {};
+              setTurns((prev) => {
+                const idx = [...prev].reverse().findIndex(
+                  (t) => t.toolResult && t.toolResult.ticker === overlayResult.ticker
+                );
+                if (idx === -1) return prev;
+                const realIdx = prev.length - 1 - idx;
+                const updated = [...prev];
+                updated[realIdx] = {
+                  ...updated[realIdx],
+                  toolResult: {
+                    ...updated[realIdx].toolResult!,
+                    overlays: {
+                      ...(updated[realIdx].toolResult!.overlays ?? {}),
+                      ...newOverlays,
+                    },
+                  },
+                };
+                return updated;
+              });
               break;
             }
 

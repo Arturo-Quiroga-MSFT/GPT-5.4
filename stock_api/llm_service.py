@@ -180,15 +180,20 @@ def run_analysis_stream(ticker: str, days: int) -> Generator[str, None, None]:
 # ── Chat stream (multi-turn, user-driven) ─────────────────────────────
 CHAT_SYSTEM_PROMPT = (
     "You are a concise financial analysis assistant with access to real-time stock data. "
-    "You have three capabilities:\n"
+    "You have four capabilities:\n"
     "1. get_stock_history — fetch daily price/volume data for technical analysis\n"
     "2. get_fundamentals — fetch valuation, profitability, growth, health, and analyst data\n"
     "3. web_search — search for latest news, earnings, analyst upgrades/downgrades, SEC filings\n"
+    "4. get_chart_indicators — add technical overlays (SMA, EMA, Bollinger Bands, support/resistance) "
+    "to a chart already on screen\n"
     "\n"
     "For technical questions (price trends, chart patterns) use get_stock_history. "
     "For value/quality questions (is it cheap? healthy balance sheet?) use get_fundamentals. "
     "For recent events (latest earnings, news, analyst changes) use web_search. "
     "For comprehensive analysis, call multiple tools. "
+    "IMPORTANT: When the user asks to add indicators, SMAs, EMAs, Bollinger Bands, or "
+    "support/resistance to an existing chart, call get_chart_indicators — do NOT call "
+    "get_stock_history again. This updates the existing chart in-place. "
     "Keep responses focused and actionable. After each analysis, suggest one useful follow-up."
 )
 
@@ -243,6 +248,7 @@ def run_chat_stream(message: str, previous_response_id: str | None) -> Generator
             _step_label = {
                 "get_stock_history": f"Fetching price history for {_ticker}",
                 "get_fundamentals": f"Pulling fundamentals for {_ticker}",
+                "get_chart_indicators": f"Computing indicators for {_ticker}",
             }.get(item.name, f"Calling {item.name}")
             yield _sse("thinking_step", {"text": _step_label + "…"})
             yield _sse("tool_call", {"name": item.name, "args": args})
@@ -256,7 +262,12 @@ def run_chat_stream(message: str, previous_response_id: str | None) -> Generator
 
             yield _sse("thinking_step", {"text": f"Data loaded for {_ticker}"})
             # Emit the right event type so the frontend can render the correct card
-            event_type = "fundamentals_result" if item.name == "get_fundamentals" else "tool_result"
+            if item.name == "get_fundamentals":
+                event_type = "fundamentals_result"
+            elif item.name == "get_chart_indicators":
+                event_type = "chart_overlay"
+            else:
+                event_type = "tool_result"
             yield _sse(event_type, result_data)
             tool_outputs.append(
                 {

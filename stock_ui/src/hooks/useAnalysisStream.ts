@@ -26,6 +26,42 @@ export interface ToolResult {
   avg_volume: number;
   pct_change: number;
   daily_closes: Record<string, number>;
+  /** Indicator overlays merged in from a follow-up chart_overlay event */
+  overlays?: ChartOverlays;
+}
+
+export interface SmaOverlay {
+  type: "sma";
+  period: number;
+  data: Record<string, number>;
+}
+
+export interface EmaOverlay {
+  type: "ema";
+  period: number;
+  data: Record<string, number>;
+}
+
+export interface BollingerOverlay {
+  type: "bollinger";
+  period: number;
+  mid: Record<string, number>;
+  upper: Record<string, number>;
+  lower: Record<string, number>;
+}
+
+export interface SupportResistanceOverlay {
+  type: "support_resistance";
+  resistance: number[];
+  support: number[];
+}
+
+export type ChartOverlay = SmaOverlay | EmaOverlay | BollingerOverlay | SupportResistanceOverlay;
+export type ChartOverlays = Record<string, ChartOverlay>;
+
+export interface ChartOverlayResult {
+  ticker: string;
+  overlays: ChartOverlays;
 }
 
 export interface UsageInfo {
