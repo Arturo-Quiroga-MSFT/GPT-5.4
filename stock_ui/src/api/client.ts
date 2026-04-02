@@ -81,3 +81,40 @@ export async function openJudgeStream(req: JudgeRequest): Promise<Response> {
   }
   return res;
 }
+
+
+// ── FOMC endpoints ───────────────────────────────────────────────────
+
+export interface FomcChatRequest {
+  message: string;
+  previous_response_id?: string;
+}
+
+export interface FomcStatusResponse {
+  available: boolean;
+  chunk_count: number;
+  meeting_count: number;
+}
+
+/** Check FOMC vector store availability. */
+export async function getFomcStatus(): Promise<FomcStatusResponse> {
+  const res = await fetch(`${API_BASE}/api/fomc/status`);
+  if (!res.ok) {
+    throw new Error(`API error ${res.status}`);
+  }
+  return res.json();
+}
+
+/** Open the SSE stream for the FOMC RAG chat endpoint. */
+export async function openFomcChatStream(req: FomcChatRequest): Promise<Response> {
+  const res = await fetch(`${API_BASE}/api/fomc/chat`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(req),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`API error ${res.status}: ${text}`);
+  }
+  return res;
+}

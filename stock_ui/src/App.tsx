@@ -12,6 +12,7 @@ import { StatusBadge } from "./components/StatusBadge";
 import { FundamentalsCard } from "./components/FundamentalsCard";
 import { ThoughtPanel } from "./components/ThoughtPanel";
 import { ComparePage } from "./components/ComparePage";
+import { FomcPage } from "./components/FomcPage";
 
 const TECHNICAL_PROMPTS = [
   "Analyse MSFT for the last 60 days",
@@ -285,6 +286,9 @@ function App() {
           <NavLink to="/compare" className={({ isActive }) => `tab-link${isActive ? " active" : ""}`}>
             ⚡ Compare
           </NavLink>
+          <NavLink to="/fomc" className={({ isActive }) => `tab-link${isActive ? " active" : ""}`}>
+            🏦 FOMC
+          </NavLink>
         </nav>
         {/* Chat-page actions are rendered inside ChatPageContent */}
         <div id="chat-header-portal" />
@@ -294,6 +298,7 @@ function App() {
       <Routes>
         <Route path="/" element={<ChatPageContent />} />
         <Route path="/compare" element={<ComparePage />} />
+        <Route path="/fomc" element={<FomcPage />} />
       </Routes>
     </div>
   );

@@ -98,6 +98,16 @@ GPT-5.4/
 │   ├── 05_streaming_comparison.py
 │   └── 06_multi_turn_comparison.py
 │
+├── fomc/                              # FOMC minutes RAG analysis
+│   ├── config.py
+│   ├── requirements.txt
+│   ├── 01_scrape_fomc.py
+│   ├── 02_index_fomc.py
+│   ├── 03_query_fomc.py
+│   ├── 04_sentiment_fomc.py
+│   ├── data/                          # Scraped minutes (gitignored)
+│   └── chroma_db/                     # Vector store (gitignored)
+│
 └── finance/                           # Finance-focused experiments
     ├── stock_history.py
     └── advanced_finance_healthcare.ipynb
@@ -133,6 +143,19 @@ Requires a second deployment — add `AZURE_OPENAI_DEPLOYMENT_PRO=gpt-5.4-pro` t
 | 04 | `04_tool_calling_comparison.py` | Tool selection accuracy and round-trip latency |
 | 05 | `05_streaming_comparison.py` | Time-to-first-token and total streaming latency |
 | 06 | `06_multi_turn_comparison.py` | Context retention over a 3-turn conversation |
+
+### `fomc/` — FOMC Minutes RAG Analysis
+
+A complete Retrieval-Augmented Generation pipeline for analyzing Federal Reserve monetary-policy documents.
+Inspired by the [MathWorks FOMC Challenge Project](https://github.com/mathworks/MATLAB-Simulink-Challenge-Project-Hub/tree/main/projects/Federal%20Open%20Market%20Committee%20Minutes%20Analysis%20with%20Large%20Language%20Models),
+reiplemented in Python with Azure OpenAI.
+
+| # | Script | What it does |
+|---|---|---|
+| 01 | `01_scrape_fomc.py` | Scrapes FOMC minutes from federalreserve.gov, saves as plain text |
+| 02 | `02_index_fomc.py` | Chunks text, embeds via `text-embedding-3-large`, stores in ChromaDB |
+| 03 | `03_query_fomc.py` | Interactive multi-turn RAG chat with streaming and source attribution |
+| 04 | `04_sentiment_fomc.py` | Structured sentiment extraction: hawkish/dovish score, rate outlook, inflation concern |
 
 ### `finance/` — Finance experiments
 

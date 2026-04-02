@@ -61,3 +61,16 @@ class JudgeRequest(BaseModel):
     low_response: str = Field(..., min_length=1, description="Response from the low reasoning level")
     medium_response: str = Field(..., min_length=1, description="Response from the medium reasoning level")
     high_response: str = Field(..., min_length=1, description="Response from the high reasoning level")
+
+
+class FomcChatRequest(BaseModel):
+    message: str = Field(..., min_length=1, max_length=2000, description="Question about FOMC / monetary policy")
+    previous_response_id: str | None = Field(default=None, description="Response ID from the previous turn")
+
+    @field_validator("message")
+    @classmethod
+    def clean_message(cls, v: str) -> str:
+        v = v.strip()
+        if not v:
+            raise ValueError("Message cannot be empty")
+        return v

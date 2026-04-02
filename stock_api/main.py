@@ -20,8 +20,9 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 
-from models import AnalyseRequest, ChatRequest, CompareRequest, JudgeRequest
+from models import AnalyseRequest, ChatRequest, CompareRequest, JudgeRequest, FomcChatRequest
 from llm_service import run_analysis_stream, run_chat_stream, run_compare_stream, run_judge_stream
+from fomc_service import run_fomc_chat_stream, get_fomc_status
 
 # Origins allowed to call the API — extend as needed for production
 ALLOWED_ORIGINS = [
@@ -150,6 +151,39 @@ def judge(req: JudgeRequest):
     """
     return StreamingResponse(
         run_judge_stream(req.query, req.low_response, req.medium_response, req.high_response),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
+            "Connection": "keep-alive",
+        },
+    )
+
+
+# ── FOMC endpoints ───────────────────────────────────────────────────
+
+@app.get("/api/fomc/status")
+def fomc_status():
+    """Return availability info for the FOMC vector store."""
+    return get_fomc_status()
+
+
+@app.post("/api/fomc/chat")
+def fomc_chat(req: FomcChatRequest):
+    """
+    Stream a RAG-grounded FOMC analysis.
+
+    Event types:
+        status          — retrieval started
+        fomc_sources    — retrieved source chunks with dates and relevance
+        analysis_start  — model generating
+        analysis_delta  — one token of analysis text
+        reasoning_delta — one token of reasoning summary
+        done            — complete (response_id, usage)
+        error           — something went wrong
+    """
+    return StreamingResponse(
+        run_fomc_chat_stream(req.message, req.previous_response_id),
         media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",

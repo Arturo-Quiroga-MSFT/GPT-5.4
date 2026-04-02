@@ -1168,3 +1168,121 @@
   color: #e74c3c;
 }
 
+/* ─── FOMC page ────────────────────────────────────────── */
+
+.fomc-status-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.82rem;
+  color: #8899b8;
+  margin-top: 0.5rem;
+}
+
+.fomc-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+.fomc-dot.available   { background: #00c896; box-shadow: 0 0 6px #00c89688; }
+.fomc-dot.unavailable { background: #e74c3c; }
+
+.fomc-label { color: #f0a500 !important; }
+
+.fomc-chip {
+  border-color: rgba(240, 165, 0, 0.25) !important;
+}
+.fomc-chip:hover {
+  background: rgba(240, 165, 0, 0.12) !important;
+  border-color: rgba(240, 165, 0, 0.45) !important;
+}
+
+/* Sources table */
+.fomc-sources {
+  margin-bottom: 1rem;
+}
+
+.fomc-sources-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #7b99d4;
+  margin: 0 0 0.4rem;
+}
+
+.fomc-sources-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+
+.fomc-sources-table th {
+  text-align: left;
+  padding: 0.35rem 0.6rem;
+  font-weight: 600;
+  color: #8899b8;
+  border-bottom: 1px solid rgba(120, 150, 200, 0.15);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.fomc-sources-table td {
+  padding: 0.3rem 0.6rem;
+  color: #b0bcd8;
+  border-bottom: 1px solid rgba(120, 150, 200, 0.08);
+}
+
+.fomc-src-num   { color: #5c6a88; width: 2rem; }
+.fomc-src-date  { color: #f0a500; font-weight: 500; white-space: nowrap; }
+.fomc-src-score { color: #00c896; font-family: "Fira Code", monospace; white-space: nowrap; }
+.fomc-src-preview {
+  color: #8899b8;
+  max-width: 28rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Reasoning block */
+.fomc-reasoning {
+  background: rgba(240, 165, 0, 0.06);
+  border-left: 3px solid rgba(240, 165, 0, 0.35);
+  padding: 0.6rem 0.9rem;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+  font-size: 0.82rem;
+  color: #b0bcd8;
+  line-height: 1.6;
+}
+
+.fomc-reasoning p { margin: 0.3rem 0 0; }
+
+.fomc-reasoning-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #f0a500;
+  font-weight: 600;
+}
+
+/* Phase badge during streaming */
+.fomc-phase-badge {
+  font-size: 0.78rem;
+  color: #8899b8;
+  margin-bottom: 0.6rem;
+  padding: 0.25rem 0.6rem;
+  background: rgba(120, 150, 200, 0.08);
+  border-radius: 6px;
+  display: inline-block;
+}
+
+/* Footer row for new-chat button alignment */
+.fomc-footer-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 0.4rem;
+}
+

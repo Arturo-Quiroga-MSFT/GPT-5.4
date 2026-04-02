@@ -35,6 +35,10 @@ Thumbs.db
 outputs/
 finance/*_close_chart.png
 
+# FOMC scraped data and vector store
+fomc/data/
+fomc/chroma_db/
+
 # Dev script runtime files
 logs/
 .pids/
